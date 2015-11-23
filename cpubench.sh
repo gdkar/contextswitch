@@ -25,6 +25,9 @@ echo "$ncpus physical CPUs, $corepercpu cores/CPU,\
  $threadpercore hardware threads/core = $total hw threads total"
 
 runbench() {
+  $* ./timespin
+  $* ./timefncall
+  LD_LIBRARY_PATH=$./:$LD_LIBRARY_PATH $* ./timelibcall
   $* ./timesyscall
   $* ./timectxsw
   $* ./timetctxsw
