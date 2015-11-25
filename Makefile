@@ -5,22 +5,22 @@ LDFLAGS = -lrt -lpthread
 
 LIBFLAGS = -shared
 
-TARGETS = liblib.so timectxsw timectxswws timelibcall timespin timefncall timesyscall timetctxsw timetctxsw2
 
 all: bench
-
 timelibcall: liblib.so
 timelibcall: LDFLAGS += -L./ -llib
+TARGETS = liblib.so timectxsw timectxswws timelibcall timespin timefncall timesyscall timetctxsw timetctxsw2
 
 
 lib%.so: %.c
 	$(CC) $(CFLAGS)  $(LIBFLAGS) -o $@ $<
 
 
+build: $(TARGETS)
 bench: $(TARGETS)
 	./cpubench.sh
 
 clean:
 	rm -f $(TARGETS)
 
-.PHONY: all bench
+.PHONY: all bench build

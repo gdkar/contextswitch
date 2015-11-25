@@ -4,25 +4,27 @@
 #include <time.h>
 #include <unistd.h>
 
-static inline long long unsigned time_ns(struct timespec* const ts) {
-  if (clock_gettime(CLOCK_REALTIME, ts)) {
-    exit(1);
-  }
-  return ((long long unsigned) ts->tv_sec) * 1000000000LLU
-    + (long long unsigned) ts->tv_nsec;
+#include "timecore.h"
+
+static inline int function_call(int arg)
+{
+    return arg;
 }
 
 int main(void) {
   const long iterations = 1000000000;
   struct timespec ts;
-  const long long unsigned start_ns = time_ns(&ts);
-  volatile long asignto = 0;
+  uint64_t tsc;
+  clock_start (&ts);
+  tsc_start(&tsc);
+  volatile int asignto = 0;
   for (long i = 0; i < iterations; i++) {
-    asignto = i;
+    asignto = function_call(i);
   }
-  const long long unsigned delta = time_ns(&ts) - start_ns;
-  printf("asignto = %ld\n",asignto);
-  printf("%ld spins in %lluns (%.1fns/spin)\n",
-         iterations, delta, (delta / (float) iterations));
+  const long long unsigned delta = clock_end(&ts);
+  const long long unsigned delta_tsc = tsc_end(&tsc);
+  (void) asignto;
+  printf("%ld spins in %lluns (%.1fns/spin, %.1f clocks/spin)\n",
+         iterations, delta, (delta / (double) iterations),delta_tsc / (double)iterations);
   return 0;
 }

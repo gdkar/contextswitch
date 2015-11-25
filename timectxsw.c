@@ -10,17 +10,12 @@
 
 #include <linux/futex.h>
 
-static inline long long unsigned time_ns(struct timespec* const ts) {
-  if (clock_gettime(CLOCK_REALTIME, ts)) {
-    exit(1);
-  }
-  return ((long long unsigned) ts->tv_sec) * 1000000000LLU
-    + (long long unsigned) ts->tv_nsec;
-}
+#include "timecore.h"
 
 int main(void) {
-  const int iterations = 500000;
+  const int iterations = 100000;
   struct timespec ts;
+  uint64_t tsc;
   const int shm_id = shmget(IPC_PRIVATE, sizeof (int), IPC_CREAT | 0666);
   const pid_t other = fork();
   int* futex = shmat(shm_id, NULL, 0);
@@ -40,8 +35,8 @@ int main(void) {
     }
     return 0;
   }
-
-  const long long unsigned start_ns = time_ns(&ts);
+  clock_start(&ts);
+  tsc_start(&tsc);
   for (int i = 0; i < iterations; i++) {
     *futex = 0xA;
     while (!syscall(SYS_futex, futex, FUTEX_WAKE, 1, NULL, NULL, 42)) {
@@ -54,11 +49,12 @@ int main(void) {
       sched_yield();
     }
   }
-  const long long unsigned delta = time_ns(&ts) - start_ns;
+  const uint64_t delta = clock_end(&ts);
+  const uint64_t delta_tsc = tsc_end(&tsc);
 
   const int nswitches = iterations << 2;
-  printf("%i process context switches in %lluns (%.1fns/ctxsw)\n",
-         nswitches, delta, (delta / (float) nswitches));
+  printf("%i process context switches in %zu (%.1fns/context switch, %0.1f clocks/context switch)\n",
+         nswitches, delta, (delta / (double) nswitches), delta_tsc/(double)nswitches);
   wait(futex);
   return 0;
 }

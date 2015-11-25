@@ -8,16 +8,12 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-
+#include <errno.h>
+#include <string.h>
 #include <linux/futex.h>
 
-static inline long long unsigned time_ns(struct timespec* const ts) {
-  if (clock_gettime(CLOCK_REALTIME, ts)) {
-    exit(1);
-  }
-  return ((long long unsigned) ts->tv_sec) * 1000000000LLU
-    + (long long unsigned) ts->tv_nsec;
-}
+
+#include "timecore.h"
 
 static const int iterations = 500000;
 
@@ -43,12 +39,18 @@ int main(void) {
   const int shm_id = shmget(IPC_PRIVATE, sizeof (int), IPC_CREAT | 0666);
   int* futex = shmat(shm_id, NULL, 0);
   pthread_t thd;
+  struct sched_param param;
+  param.sched_priority = 1;
+
+  if (sched_setscheduler(getpid(), SCHED_FIFO, &param))
+    fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
+
   if (pthread_create(&thd, NULL, thread, futex)) {
     return 1;
   }
   *futex = 0xA;
 
-  const long long unsigned start_ns = time_ns(&ts);
+  clock_start(&ts);
   for (int i = 0; i < iterations; i++) {
     *futex = 0xA;
     while (!syscall(SYS_futex, futex, FUTEX_WAKE, 1, NULL, NULL, 42)) {
@@ -61,10 +63,10 @@ int main(void) {
       sched_yield();
     }
   }
-  const long long unsigned delta = time_ns(&ts) - start_ns;
+  const uint64_t delta = clock_end(&ts);
 
   const int nswitches = iterations << 2;
-  printf("%i  thread context switches in %lluns (%.1fns/ctxsw)\n",
+  printf("%i  thread context switches in %zu(%.1fns/ctxsw)\n",
          nswitches, delta, (delta / (float) nswitches));
   wait(futex);
   return 0;

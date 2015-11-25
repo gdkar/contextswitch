@@ -10,14 +10,8 @@
 #include <unistd.h>
 
 #include <linux/futex.h>
+#include "timecore.h"
 
-static inline long long unsigned time_ns(struct timespec* const ts) {
-  if (clock_gettime(CLOCK_REALTIME, ts)) {
-    exit(1);
-  }
-  return ((long long unsigned) ts->tv_sec) * 1000000000LLU
-    + (long long unsigned) ts->tv_nsec;
-}
 
 static inline int get_iterations(int ws_pages) {
   int iterations = 1000;
@@ -39,16 +33,20 @@ int main(int argc, char** argv) {
   }
   const int iterations = get_iterations(ws_pages);
   struct timespec ts;
-
-  long long unsigned memset_time = 0;
+  uint64_t tsc;
+  uint64_t delta_tsc;
+  uint64_t memset_time = 0;
+  uint64_t memset_tsc  = 0;
   if (ws_pages) {
     void* buf = malloc(ws_pages * 4096);
-    memset_time = time_ns(&ts);
+    clock_start(&ts);
+    tsc_start(&tsc);
     for (int i = 0; i < iterations; i++) {
       memset(buf, i, ws_pages * 4096);
     }
-    memset_time = time_ns(&ts) - memset_time;
-    printf("%i memset on %4liK in %10lluns (%.1fns/page)\n",
+    memset_time = clock_end(&ts);
+    memset_tsc  = tsc_end(&tsc);
+    printf("%i memset on %4zuK in %10zu(%.1fns/page)\n",
            iterations, ws_pages * 4, memset_time,
            (memset_time / ((float) ws_pages * iterations)));
     free(buf);
@@ -78,8 +76,8 @@ int main(int argc, char** argv) {
     }
     return 0;
   }
-
-  const long long unsigned start_ns = time_ns(&ts);
+  clock_start(&ts);
+  tsc_start(&tsc);
   for (int i = 0; i < iterations; i++) {
     *futex = 0xA;
     if (ws_pages) {
@@ -95,11 +93,11 @@ int main(int argc, char** argv) {
       sched_yield();
     }
   }
-  const long long unsigned delta = time_ns(&ts) - start_ns - memset_time * 2;
-
+  const uint64_t delta = clock_end(&ts) - memset_time * 2;
+  delta_tsc = tsc_end(&tsc) - memset_tsc * 2;
   const int nswitches = iterations * 4;
-  printf("%i process context switches (wss:%4liK) in %12lluns (%.1fns/ctxsw)\n",
-         nswitches, ws_pages * 4, delta, (delta / (float) nswitches));
+  printf("%i process context switches (wss:%4zuK) in %12zu(%.1fns/ctxsw, %.1f clocks/ctxsw)\n",
+         nswitches, ws_pages * 4, delta, (delta / (float) nswitches), delta_tsc / (double) ( nswitches ));
   wait(futex);
   return 0;
 }

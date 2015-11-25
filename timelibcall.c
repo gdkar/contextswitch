@@ -5,28 +5,25 @@
 #include <math.h>
 #include <unistd.h>
 
+
+#include "timecore.h"
+
 extern int library_call(int arg);
-
-static inline long long unsigned time_ns(struct timespec* const ts) {
-  if (clock_gettime(CLOCK_REALTIME, ts)) {
-    exit(1);
-  }
-  return ((long long unsigned) ts->tv_sec) * 1000000000LLU
-    + (long long unsigned) ts->tv_nsec;
-}
-
 
 int main(void) {
   const long  iterations = 100000000;
   struct timespec ts;
-  const long long unsigned start_ns = time_ns(&ts);
-  int toggle = start_ns;
+  uint64_t tsc;
+  clock_start(&ts);
+  tsc_start(&tsc);
+  int toggle = 0;
   for (long i = 0; i < iterations; i++) {
-    toggle = library_call(toggle+i);
+    toggle = library_call(toggle);
   }
-  const long long unsigned delta = time_ns(&ts) - start_ns;
+  const long long unsigned delta = clock_end(&ts);
+  const long long unsigned delta_tsc = tsc_end(&tsc);
   (void) toggle;
-  printf("%ld library calls in %lluns (%.1fns/library call)\n",
-         iterations, delta, (delta / (float) iterations));
+  printf("%ld library calls in %lluns (%.1fns/library call, %.1f clocks/library call)\n",
+         iterations, delta, (delta / (double) iterations),delta_tsc/(double)iterations);
   return 0;
 }
