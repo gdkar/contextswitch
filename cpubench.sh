@@ -30,8 +30,11 @@ runbench() {
   LD_LIBRARY_PATH=$./:$LD_LIBRARY_PATH $* ./timelibcall
   $* ./timesyscall
   $* ./timectxsw
+  $* ./timectxswpipe
   $* ./timetctxsw
   $* ./timetctxsw2
+  $* ./timectxswsem
+  $* ./timectxswpipe
 }
 
 echo '-- No CPU affinity --'

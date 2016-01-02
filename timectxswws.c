@@ -15,7 +15,9 @@
 
 static inline int get_iterations(int ws_pages) {
   int iterations = 1000;
-  while (iterations * ws_pages * 4096L < 4294967296L) {  // 4GB
+  if(!ws_pages)
+      ws_pages = 1;
+  while (iterations * ws_pages * 4096 <( (1l)<<28)) {
     iterations += 1000;
   }
   return iterations;
@@ -52,8 +54,7 @@ int main(int argc, char** argv) {
     free(buf);
   }
 
-  const int shm_id = shmget(IPC_PRIVATE, (ws_pages + 1) * 4096,
-                            IPC_CREAT | 0666);
+  const int shm_id = shmget(IPC_PRIVATE, (ws_pages + 1) * 4096, IPC_CREAT | 0666);
   const pid_t other = fork();
   int* futex = shmat(shm_id, NULL, 0);
   void* ws = ((char *) futex) + 4096;
@@ -61,18 +62,15 @@ int main(int argc, char** argv) {
   if (other == 0) {
     for (int i = 0; i < iterations; i++) {
       sched_yield();
-      while (syscall(SYS_futex, futex, FUTEX_WAIT, 0xA, NULL, NULL, 42)) {
+      while (syscall(SYS_futex, futex, FUTEX_WAIT, 0xA, NULL, NULL, 42))
         // retry
         sched_yield();
-      }
       *futex = 0xB;
-      if (ws_pages) {
+      if (ws_pages)
         memset(ws, i, ws_pages * 4096);
-      }
-      while (!syscall(SYS_futex, futex, FUTEX_WAKE, 1, NULL, NULL, 42)) {
+      while (!syscall(SYS_futex, futex, FUTEX_WAKE, 1, NULL, NULL, 42))
         // retry
         sched_yield();
-      }
     }
     return 0;
   }

@@ -35,7 +35,7 @@ int main(void) {
   pthread_join(thd, &retval);
 
   const int nswitches = iterations << 1;
-  printf("%i  thread context switches in %lluns (%.1fns/ctxsw)\n",
+  printf("%i sched_yield()'s in %lluns (%.1fns/ctxsw)\n",
          nswitches, delta, (delta / (float) nswitches));
   return 0;
 }
