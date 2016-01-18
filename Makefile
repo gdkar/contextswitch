@@ -4,10 +4,11 @@ LDFLAGS = -lrt -pthread
 
 LIBFLAGS = -shared
 
-all: bench
+all: build
 timelibcall: liblib.so
 timelibcall: LDFLAGS += -L./ -llib
-TARGETS = liblib.so timectxswsem timectxswpipe timectxsw timectxswws timelibcall timespin timefncall timesyscall timetctxsw timetctxsw2 timetctxswpipe timetctxswsem
+TARGETS = liblib.so timectxswsem timectxswpipe timectxsw timectxswws timelibcall timespin timefncall timesyscall timetctxsw timetctxsw2 timetctxswpipe timetctxswsem timetctxswcond timemutex timesem timecond
+
 
 
 lib%.so: %.c
@@ -16,7 +17,7 @@ lib%.so: %.c
 
 build: $(TARGETS)
 bench: $(TARGETS)
-	./cpubench.sh
+	sudo -E ./cpubench.sh
 
 clean:
 	rm -f $(TARGETS)

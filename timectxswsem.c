@@ -18,7 +18,7 @@
 
 #include "timecore.h"
 
-static const int iterations = 500000;
+static const int iterations = 100000;
 struct sem_pair {
     sem_t parent;
     sem_t child;
@@ -29,9 +29,12 @@ static void* thread(void* restrict ftx) {
     int ret;
     do {
         ret = sem_wait(&pair->child);
-        if(ret < 0)
-            ret = errno;
-    }while(ret == EINTR || ret == EAGAIN);
+          if(ret < 0 && (errno != EINTR && errno != EAGAIN)) {
+            ret = -errno;
+            perror("sem_wait");
+            return NULL;
+        }
+    }while(ret < 0);
     sem_post(&pair->parent);
   }
   return NULL;
@@ -50,11 +53,11 @@ int main(void) {
     return ret;
   }
   pid_t other = -1;
-  struct sched_param param;
+/*  struct sched_param param;
   param.sched_priority = 1;
 
   if (sched_setscheduler(getpid(), SCHED_FIFO, &param))
-    fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
+    fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));*/
 
   other = fork();
   if(other < 0) {
@@ -71,8 +74,11 @@ int main(void) {
   for (int i = 0; i < iterations ; i++) {
     do {
         ret = sem_wait(&pair->parent);
-        if(ret < 0)
-            ret = errno;
+        if(ret < 0 && (errno != EINTR && errno != EAGAIN)) {
+            ret = -errno;
+            perror("sem_wait");
+            return ret;
+        }
     }while(ret == EINTR || ret == EAGAIN);
     sem_post(&pair->child);
   }
@@ -86,6 +92,6 @@ int main(void) {
   sem_destroy(&pair->child);
   sem_destroy(&pair->parent);
   const int nswitches = (iterations << 1) ;
-  printf("%i  thread context switches (sem) in %zu(%.1fns/ctxsw)\n",nswitches, delta, (delta / (float) nswitches));
+  printf("%i  process context switches (sem) in %zu(%.1fns/ctxsw)\n",nswitches, delta, (delta / (float) nswitches));
   return 0;
 }

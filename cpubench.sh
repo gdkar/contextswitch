@@ -30,23 +30,25 @@ runbench() {
   LD_LIBRARY_PATH=$./:$LD_LIBRARY_PATH $* ./timelibcall
   $* ./timesyscall
   $* ./timectxsw
+  $* ./timectxswsem
   $* ./timectxswpipe
   $* ./timetctxsw
   $* ./timetctxsw2
-  $* ./timectxswsem
-  $* ./timectxswpipe
+  $* ./timetctxswsem
+  $* ./timetctxswcond
+  $* ./timetctxswpipe
 }
 
 echo '-- No CPU affinity --'
 runbench
 
-echo '-- With CPU affinity --'
+echo "-- With CPU affinity 0 ( for parent ) --"
 lastcpu=`awk </dev/null -v ncpus=$ncpus 'BEGIN {
   n = 1;
   for(i = 1; i < ncpus; i++) n *= 2;
   printf("0x%x\n", n);
 }'`
-runbench taskset $lastcpu
+runbench taskset  0x2
 
-echo '-- With CPU affinity to CPU 0 --'
-runbench taskset `sed 's/,//g;s/^/0x/' /sys/bus/node/devices/node0/cpumap`
+echo '-- With CPU affinity to CPU 0 for all --'
+runbench taskset -a -c 0

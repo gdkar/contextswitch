@@ -7,7 +7,7 @@
 #include "timecore.h"
 
 int main(void) {
-  const int iterations = 10000000;
+  const int iterations = 1000000;
   struct timespec ts;
   uint64_t tsc;
   clock_start(&ts);

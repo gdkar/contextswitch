@@ -48,11 +48,9 @@ int main(int argc, char **argv) {
   if (!other) {
     fd_w = pipe_from_child[1];
     fd_r = pipe_to_child[0];
-    fprintf(stderr,"Parent process,parent pid = %d\n",getppid());
   } else {
     fd_w = pipe_to_child[1];
     fd_r = pipe_from_child[0];
-    fprintf(stderr,"Parent process,pid = %d, child pid = %d\n",getpid(),other);
     do{
         errno = 0;
         ret = write(fd_w, " ",1);
@@ -87,6 +85,9 @@ int main(int argc, char **argv) {
         }
     }while(ret <= 0);
   }
+  uint64_t delta = clock_end(&ts);
+  uint64_t delta_tsc = tsc_end(&tsc);
+
   if(!other)
       _exit(EXIT_SUCCESS);
 
@@ -101,8 +102,6 @@ int main(int argc, char **argv) {
         }
     }while(!WIFEXITED(result) && !WIFSIGNALED(result));
   }
-  uint64_t delta = clock_end(&ts);
-  uint64_t delta_tsc = tsc_end(&tsc);
 
   const int nswitches = iterations << 1;
   fprintf(stderr, "%i pipe / ipc switches in %zu (%.1fns/pipe block | unblock,  %0.1f clocks / pipe block | unblock)\n",

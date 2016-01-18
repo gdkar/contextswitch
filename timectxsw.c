@@ -1,5 +1,7 @@
 #include <sched.h>
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -17,6 +19,12 @@ int main(void) {
   struct timespec ts;
   uint64_t tsc;
   const int shm_id = shmget(IPC_PRIVATE, sizeof (int), IPC_CREAT | 0666);
+  struct sched_param param;
+  param.sched_priority = 1;
+
+  if (sched_setscheduler(getpid(), SCHED_FIFO, &param))
+    fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
+
   const pid_t other = fork();
   int* futex = shmat(shm_id, NULL, 0);
   *futex = 0xA;

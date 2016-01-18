@@ -23,7 +23,7 @@ struct arg {
     int fd_w;
 };
 
-  const int iterations = 100000;
+  const int iterations = 10000;
 void *thrd_func(void *arg_){
   struct arg *arg = arg_;
   int fd_r = arg->fd_r;
@@ -66,9 +66,6 @@ int main(int argc, char **argv) {
 //  const int shm_id = shmget(IPC_PRIVATE, sizeof (int), IPC_CREAT | 0666);
   pthread_t      thrd;
   ssize_t ret = 0;
-  struct sched_param param = (struct sched_param){.sched_priority = 1 };
-  if(sched_setscheduler(getpid(),SCHED_FIFO,&param))
-    fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
   struct arg arg_ = (struct arg){ .fd_r = pipe_to_child[0], .fd_w = pipe_from_child[1]};
   ret = pthread_create(&thrd,NULL,thrd_func,&arg_);
 
@@ -80,7 +77,6 @@ int main(int argc, char **argv) {
     int fd_r = 0;
     fd_w = pipe_to_child[1];
     fd_r = pipe_from_child[0];
-    fprintf(stderr,"Parent process,pid = %d.\n",getpid());
   clock_start(&ts);
   tsc_start(&tsc);
   for (int i = 0; i < iterations; i++) {

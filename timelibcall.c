@@ -11,7 +11,7 @@
 extern int library_call(int arg);
 
 int main(void) {
-  const long  iterations = 100000000;
+  const long  iterations = 10000000;
   struct timespec ts;
   uint64_t tsc;
   clock_start(&ts);
