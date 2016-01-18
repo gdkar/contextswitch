@@ -40,6 +40,10 @@ int main(void) {
   sem_init(&pair->child,0,1);
   sem_init(&pair->parent,0,0);
   pthread_t thd;
+  struct sched_param param;
+  param.sched_priority = 1;
+  if (sched_setscheduler(getpid(), SCHED_RR, &param))
+    fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
 
   if (pthread_create(&thd, NULL, thread, pair))
     return -errno;

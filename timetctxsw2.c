@@ -19,7 +19,7 @@ static void* thread(void*ctx) {
 int main(void) {
   struct sched_param param;
   param.sched_priority = 1;
-  if (sched_setscheduler(getpid(), SCHED_FIFO, &param))
+  if (sched_setscheduler(getpid(), SCHED_RR, &param))
     fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
 
   struct timespec ts;

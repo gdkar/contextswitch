@@ -41,6 +41,11 @@ static void* thread(void* restrict ftx) {
 }
 
 int main(void) {
+  struct sched_param param;
+  param.sched_priority = 1;
+  if (sched_setscheduler(getpid(), SCHED_RR, &param))
+    fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
+
   struct timespec ts;
   int ret;
   const int shm_id = shmget(IPC_PRIVATE, sizeof(struct sem_pair), IPC_CREAT | 0666);

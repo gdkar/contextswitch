@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <semaphore.h>
 #include "timecore.h"
 
 static const int iterations = 10000000;
@@ -21,48 +20,44 @@ int main(void) {
     fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
 
   struct timespec ts;
-  sem_t sem;
-  sem_init(&sem,1,0);
+  pthread_cond_t cond;
+  pthread_mutex_t mtx;
+  pthread_mutex_init(&mtx,NULL);
+  pthread_cond_init(&cond,NULL);
   {
     clock_start(&ts);
     for (int i = 0; i < iterations ; i++) {
-        sem_post(&sem);
+        pthread_cond_signal(&cond);
     }
     const uint64_t delta = clock_end(&ts);
     const int nswitches = (iterations ) ;
-    printf("%i  semaphore posts in %zu(%.1fns/post)\n",nswitches, delta, (delta / (float) nswitches));
+    printf("%i  condition signals in %zu(%.1fns/signal)\n",nswitches, delta, (delta / (float) nswitches));
   }
-  {
+    {
     clock_start(&ts);
     for (int i = 0; i < iterations ; i++) {
-        sem_wait(&sem);
+        pthread_cond_broadcast(&cond);
     }
     const uint64_t delta = clock_end(&ts);
     const int nswitches = (iterations ) ;
-    printf("%i  semaphore wait in %zu(%.1fns/wait)\n",nswitches, delta, (delta / (float) nswitches));
+    printf("%i  condition broadcast in %zu(%.1fns/broadcast)\n",nswitches, delta, (delta / (float) nswitches));
   }
   {
     clock_start(&ts);
-    for (int i = 0; i < iterations ; i++) {
-        sem_trywait(&sem);
-    }
-    const uint64_t delta = clock_end(&ts);
-    const int nswitches = (iterations ) ;
-    printf("%i  semaphore trywaits in %zu(%.1fns/trywait)\n",nswitches, delta, (delta / (float) nswitches));
-  }
-  {
-    clock_start(&ts);
-        struct timespec now;
-        clock_gettime(CLOCK_REALTIME,&now);
+    struct timespec now = { 0, 0};
+//    clock_gettime(CLOCK_REALTIME,&now);
 
-    clock_gettime(CLOCK_REALTIME,&now);
     for (int i = 0; i < iterations/100 ; i++) {
-        sem_timedwait(&sem,&now);
+        pthread_mutex_lock(&mtx);
+        
+        pthread_cond_timedwait(&cond,&mtx,&now);
+        pthread_mutex_unlock(&mtx);
     }
     const uint64_t delta = clock_end(&ts);
     const int nswitches = (iterations/100 ) ;
-    printf("%i  semaphore timedwaits in %zu(%.1fns/timedwait)\n",nswitches, delta, (delta / (float) nswitches));
+    printf("%i  condition timedwaits in %zu(%.1fns/timedwait)\n",nswitches, delta, (delta / (float) nswitches));
   }
-  sem_destroy(&sem);
+  pthread_cond_destroy(&cond);
+  pthread_mutex_destroy(&mtx);
   return 0;
 }

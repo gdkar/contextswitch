@@ -40,7 +40,7 @@ int main(void) {
   pthread_mutex_lock(&pair->mtx);
   struct sched_param param;
   param.sched_priority = 1;
-  if (sched_setscheduler(getpid(), SCHED_FIFO, &param))
+  if (sched_setscheduler(getpid(), SCHED_RR, &param))
     fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
 
   if (pthread_create(&thd, NULL, thread, pair)) {

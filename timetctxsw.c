@@ -15,7 +15,7 @@
 
 #include "timecore.h"
 
-static const int iterations = 10000;
+static const int iterations = 100000;
 
 static void* thread(void* restrict ftx) {
   int* futex = (int*) ftx;
