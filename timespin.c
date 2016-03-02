@@ -6,7 +6,7 @@
 
 #include "timecore.h"
 
-static inline int function_call(int arg)
+static int function_call(int arg)
 {
     return arg;
 }

@@ -17,12 +17,12 @@ static const int iterations = 10000000;
 int main(void) {
   struct sched_param param;
   param.sched_priority = 1;
-  if (sched_setscheduler(getpid(), SCHED_RR, &param))
+  if (sched_setscheduler(getpid(), SCHED_FIFO, &param))
     fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
 
   struct timespec ts;
   sem_t sem;
-  sem_init(&sem,1,0);
+  sem_init(&sem,0,0);
   {
     clock_start(&ts);
     for (int i = 0; i < iterations ; i++) {
@@ -51,12 +51,16 @@ int main(void) {
     printf("%i  semaphore trywaits in %zu(%.1fns/trywait)\n",nswitches, delta, (delta / (float) nswitches));
   }
   {
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC,&now);
     clock_start(&ts);
-        struct timespec now;
-        clock_gettime(CLOCK_REALTIME,&now);
-
-    clock_gettime(CLOCK_REALTIME,&now);
     for (int i = 0; i < iterations/100 ; i++) {
+        clock_gettime(CLOCK_REALTIME,&now);
+/*        now.tv_nsec -= 50000;
+        if(now.tv_nsec < 0) {
+            now.tv_nsec += 1e9;
+            now.tv_sec  --;
+        }*/
         sem_timedwait(&sem,&now);
     }
     const uint64_t delta = clock_end(&ts);

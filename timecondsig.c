@@ -15,8 +15,8 @@
 static const int iterations = 10000000;
 int main(void) {
   struct sched_param param;
-  param.sched_priority = 1;
-  if (sched_setscheduler(getpid(), SCHED_RR, &param))
+  param.sched_priority = 99;
+  if (sched_setscheduler(getpid(), SCHED_FIFO, &param))
     fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
 
   struct timespec ts;
@@ -45,11 +45,10 @@ int main(void) {
   {
     clock_start(&ts);
     struct timespec now = { 0, 0};
-//    clock_gettime(CLOCK_REALTIME,&now);
 
     for (int i = 0; i < iterations/100 ; i++) {
+        clock_gettime(CLOCK_REALTIME,&now);
         pthread_mutex_lock(&mtx);
-        
         pthread_cond_timedwait(&cond,&mtx,&now);
         pthread_mutex_unlock(&mtx);
     }

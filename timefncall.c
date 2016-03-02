@@ -8,7 +8,7 @@
 #include "timecore.h"
 
 static __attribute__((noinline)) int function_call(int arg) {
-    return arg;
+    return -arg;
 }
 
 int main(void) {

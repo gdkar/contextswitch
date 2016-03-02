@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <stdatomic.h>
+#include "stdatomic.h"
 #include <stdbool.h>
 
 #include "timecore.h"
@@ -19,7 +19,7 @@ static const int iterations = 10000;
 struct cond_pair {
     pthread_mutex_t mtx;
     pthread_cond_t  cond;
-    _Atomic(bool)   die;
+    _Atomic bool   die;
 };
 static void* thread(void* restrict ftx) {
   struct cond_pair *pair = (struct cond_pair*) ftx;

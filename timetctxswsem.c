@@ -15,7 +15,7 @@
 
 #include "timecore.h"
 
-static const int iterations = 50000;
+static const int iterations = 500000;
 struct sem_pair {
     sem_t parent;
     sem_t child;
@@ -33,7 +33,6 @@ static void* thread(void* restrict ftx) {
   }
   return NULL;
 }
-
 int main(void) {
   struct timespec ts;
   struct sem_pair *pair = calloc(sizeof(*pair),1);
@@ -41,14 +40,20 @@ int main(void) {
   sem_init(&pair->parent,0,0);
   pthread_t thd;
   struct sched_param param;
-  param.sched_priority = 1;
-  if (sched_setscheduler(getpid(), SCHED_RR, &param))
+  int SCHED = SCHED_FIFO;
+  param.sched_priority = sched_get_priority_max(SCHED);
+  if (sched_setscheduler(getpid(), SCHED, &param))
     fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
-
-  if (pthread_create(&thd, NULL, thread, pair))
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_attr_setschedparam(&attr, &param);
+  pthread_attr_setschedpolicy(&attr, SCHED);
+  pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+  if (pthread_create(&thd, &attr, thread, pair))
     return -errno;
 
   clock_start(&ts);
+  uint64_t start_tsc = __rdtsc();
   for (int i = 0; i < iterations ; i++) {
     int ret;
     do {
@@ -59,11 +64,12 @@ int main(void) {
     sem_post(&pair->child);
   }
   const uint64_t delta = clock_end(&ts);
+  const uint64_t delta_tsc = __rdtsc() - start_tsc;
   pthread_join(thd,NULL);
   sem_destroy(&pair->child);
   sem_destroy(&pair->parent);
   free(pair);
   const int nswitches = (iterations << 1) ;
-  printf("%i  thread context switches (sem) in %zu(%.1fns/ctxsw)\n",nswitches, delta, (delta / (float) nswitches));
+  printf("%i  thread context switches (sem) in %zu(%.1fns/ctxsw, %1.f clocks/ctxsw)\n",nswitches, delta, (delta / (float) nswitches),delta_tsc / (float)nswitches);
   return 0;
 }
