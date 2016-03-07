@@ -7,7 +7,7 @@ LIBFLAGS = -shared
 all: build
 timelibcall: liblib.so
 timelibcall: LDFLAGS += -L./ -llib
-TARGETS = liblib.so timectxswsem timectxswpipe timectxsw timectxswws timelibcall timespin timefncall timesyscall timetctxsw timetctxsw2 timetctxswpipe timetctxswsem timetctxswcond timemutex timesem timecond timecondsig
+TARGETS = liblib.so timectxswsem timectxswpipe timectxsw timectxswws timelibcall timespin timefncall errnanosleep timenanosleep timesyscall timetctxsw timetctxsw2 timetctxswpipe timetctxswsem timetctxswcond timemutex timesem timecond timecondsig timeread timewrite
 
 
 

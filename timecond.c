@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include "stdatomic.h"
 #include <stdbool.h>
 
 #include "timecore.h"
@@ -19,12 +18,12 @@ static const int iterations = 10000;
 struct cond_pair {
     pthread_mutex_t mtx;
     pthread_cond_t  cond;
-    _Atomic bool   die;
+    bool   die;
 };
 static void* thread(void* restrict ftx) {
   struct cond_pair *pair = (struct cond_pair*) ftx;
   struct timespec ts = { 0, 1 };
-  while(!atomic_load(&pair->die)) {
+  while(!__atomic_load_n(&pair->die,__ATOMIC_RELAXED)) {
     pthread_mutex_lock(&pair->mtx);
     pthread_cond_signal(&pair->cond);
     pthread_mutex_unlock(&pair->mtx);
@@ -39,7 +38,7 @@ int main(void) {
   pthread_t thd;
   pthread_cond_init(&pair->cond, NULL);
   pthread_mutex_init(&pair->mtx, NULL);
-  atomic_store(&pair->die,false);
+  __atomic_store_n(&pair->die,false,__ATOMIC_RELAXED);
   pthread_mutex_lock(&pair->mtx);
 
   if (pthread_create(&thd, NULL, thread, pair)) {
@@ -52,7 +51,7 @@ int main(void) {
     delta += clock_end(&ts);
   }
   pthread_mutex_unlock(&pair->mtx);
-  atomic_store(&pair->die,true);
+  __atomic_store_n(&pair->die,true,__ATOMIC_RELAXED);
   pthread_join(thd,NULL);
   pthread_mutex_destroy(&pair->mtx);
   pthread_cond_destroy (&pair->cond);
