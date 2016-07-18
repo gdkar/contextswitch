@@ -59,6 +59,6 @@ int main(void) {
   pthread_cond_destroy (&pair->child);
   free(pair);
   const int nswitches = (iterations << 1) ;
-  printf("%i  thread context switches (cond) in %zu(%.1fns/ctxsw)\n",nswitches, delta, (delta / (float) nswitches));
+  printf("%i  thread context switches (cond) in %zu (%.1fns/ctxsw)\n",nswitches, delta, (delta / (double) nswitches));
   return 0;
 }
