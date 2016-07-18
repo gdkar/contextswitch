@@ -14,8 +14,8 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   int64_t sleep_for = atoll(argv[1]);
   struct sched_param param;
-  param.sched_priority = 1;
-  if (sched_setscheduler(getpid(), SCHED_RR, &param))
+  param.sched_priority = sched_get_priority_max(SCHED_FIFO);
+  if (sched_setscheduler(getpid(), SCHED_FIFO, &param))
     fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
   const int64_t iterations = 1e9 / (sleep_for + 4000);
   double calib = 0;

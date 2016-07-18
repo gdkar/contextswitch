@@ -11,8 +11,8 @@
 
 int main(void) {
   struct sched_param param;
-  param.sched_priority = 1;
-  if (sched_setscheduler(getpid(), SCHED_RR, &param))
+  param.sched_priority = sched_get_priority_min(SCHED_FIFO);
+  if (sched_setscheduler(getpid(), SCHED_FIFO, &param))
     fprintf(stderr, "sched_setscheduler(): %s\n", strerror(errno));
 
   const int iterations = 100000;

@@ -12,18 +12,17 @@
 
 int main(void) {
   const int iterations = 1000000;
-  int fd = open("/dev/zero",O_RDWR);
+  int fd = open("/dev/random",O_RDWR);
   if(fd < 0) {
     fprintf(stderr,"Failed to open the file, %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
-  char buf[1];
+  char buf[8];
   struct timespec ts;
   uint64_t tsc;
   clock_start(&ts);
   tsc_start(&tsc);
   for (int i = 0; i < iterations; i++) {
-    syscall(SYS_lseek, (unsigned int)fd, 0, SEEK_SET);
     int ret = syscall(SYS_write,(unsigned int)fd,&buf,sizeof(buf));
     if(ret < 0) {
         fprintf(stderr,"Failed to write, %s\n",strerror(-errno));

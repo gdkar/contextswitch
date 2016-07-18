@@ -10,7 +10,7 @@
 
 int main(void) {
   const int iterations = 1000000;
-  int fd = open("/dev/zero",O_RDONLY);
+  int fd = open("/dev/null",O_RDONLY);
   char buf[1];
   struct timespec ts;
   uint64_t tsc;
